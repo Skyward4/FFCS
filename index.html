@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Faculty Selection Flowcharts</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#faf9f6;--fg:#1f1d2b;--mut:#6b6880;--line:#7a6fc4;--card:#fff;--bd:#d9d5ec;
+--c0:#7a6fc4;--c1:#2f8f83;--c2:#c2762b;--c3:#b04a7a;--c4:#3b7fc4}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#16151d;--fg:#ecebf4;--mut:#9b98b3;--line:#9a90e0;--card:#211f2c;--bd:#3a3750}}
+:root[data-theme="dark"]{--bg:#16151d;--fg:#ecebf4;--mut:#9b98b3;--line:#9a90e0;--card:#211f2c;--bd:#3a3750}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Segoe UI",system-ui,-apple-system,sans-serif;padding:16px}
+h1{font-size:20px;margin:0 0 4px}.sub{color:var(--mut);font-size:13px;margin:0 0 12px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{border:1.5px solid var(--bd);background:var(--card);color:var(--fg);padding:8px 12px;border-radius:10px;font-size:13px;cursor:pointer}
+.tabs button.on{border-color:var(--c0);background:var(--c0);color:#fff}
+.info{font-size:13px;color:var(--mut);margin:0 0 10px}
+.wrap{overflow-x:auto;border:1.5px solid var(--bd);border-radius:12px;padding:12px;background:var(--card)}
+.inner{display:inline-block;min-width:100%}
+.heads{display:flex;margin-bottom:8px;position:sticky;left:0}
+.heads div{width:190px;flex:none;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.node{display:flex;align-items:center}
+.box{width:150px;flex:none;box-sizing:border-box;padding:5px 7px;border:2px solid var(--c);border-radius:9px;background:var(--card);font-size:12px;line-height:1.25}
+.box b{display:block;font-weight:600}.box span{color:var(--mut);font-size:11px}
+.stub{width:20px;flex:none;border-top:2px solid var(--line)}
+.kids{display:flex;flex-direction:column}
+.kid{position:relative;padding:3px 0 3px 20px}
+.kid::before{content:"";position:absolute;left:0;top:50%;width:20px;border-top:2px solid var(--line)}
+.kid::after{content:"";position:absolute;left:0;top:0;bottom:0;border-left:2px solid var(--line)}
+.kid:first-child::after{top:50%}.kid:last-child::after{bottom:50%}.kid:only-child::after{display:none}
+.note{font-size:12px;color:var(--mut);margin-top:12px;line-height:1.5}
+</style></head><body>
+<h1>Faculty selection flowcharts</h1>
+<p class="sub">Each path runs left to right: OOPS → DSA → CS → OS → Physics. No two faculty on a path share a lab slot.</p>
+<div class="tabs" id="tabs"></div>
+<p class="info" id="info"></p>
+<div class="wrap"><div class="inner"><div class="heads" id="heads"></div><div id="chart"></div></div></div>
+<p class="note">Theory slots (A1, B1, C1, E1, F1, G1 …) are all different letters across subjects, so only the lab (L) slots can clash. Maths has no lab slots, so any of its three faculty fits every branch; they all share slot A1, so pick one.</p>
+<script>
+const L=(...a)=>a;
+const OOPS=[["Vinila Jinny",L(43,44,55,56)],["Jabanjalin Hilda",L(37,38,57,58)],["Saritha Murali",L(37,38,45,46)],["Divya CR",L(31,32,41,42)]];
+const LV=[
+ ["DSA",[["Adaline Suji ★",L(33,34),"E1+TE1"],["Sharief Basha S",L(45,46),"E1+TE1"],["Ilanthenral KPSK",L(45,46),""]]],
+ ["CS",[["Arun Dhar Divedi",L(37,38),"C1+TC1"],["Anis Fatema",L(51,52),"C1+TC1"],["Avinash Chandra",L(49,50),"C1+TC1"],["Jaffino",L(53,54),"C1+TC1"]]],
+ ["OS",[["Sivakumar T",L(39,40),"B1+TB1"],["Vijayasherly V",L(37,38),"B1+TB1"],["Thirunavukkarasan M",L(53,54),"B1+TB1"]]],
+ ["Physics",[["Kanhaiya Lal Pandey",L(43,44),"G1+TG1"],["Samuel P",L(53,54),"G1+TG1"],["Dhanoj Gupta",L(45,46),"F1+TF1"],["Vishnudath K N",L(35,36),"G1+TG1"],["Krishna Chandar N",L(33,34),"G1+TG1"]]]];
+const COL=["var(--c0)","var(--c1)","var(--c2)","var(--c3)","var(--c4)"];
+const fmt=s=>s.map(x=>"L"+x).join("+");
+function build(lv,used){
+ if(lv===LV.length)return [];
+ const out=[];
+ for(const [n,s,t] of LV[lv][1]){
+  if(s.some(x=>used.has(x)))continue;
+  const u=new Set([...used,...s]);
+  const kids=build(lv+1,u);
+  if(lv<LV.length-1&&!kids.length)continue;
+  out.push({n,s,t,lv:lv+1,kids});
+ }
+ return out;
+}
+const leaves=n=>n.kids.length?n.kids.reduce((a,k)=>a+leaves(k),0):1;
+function esc(x){return x.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+function render(n){
+ let h='<div class="node"><div class="box" style="--c:'+COL[n.lv]+'"><b>'+esc(n.n)+'</b><span>'+fmt(n.s)+(n.t?' · '+n.t:'')+'</span></div>';
+ if(n.kids.length){h+='<div class="stub"></div><div class="kids">'+n.kids.map(k=>'<div class="kid">'+render(k)+'</div>').join('')+'</div>'}
+ return h+'</div>';
+}
+document.getElementById("heads").innerHTML=["OOPS"].concat(LV.map(l=>l[0])).map((x,i)=>'<div style="color:'+COL[i]+'">'+x+'</div>').join('');
+const tabs=document.getElementById("tabs");
+function show(i){
+ const [n,s]=OOPS[i];
+ const root={n,s,t:"D1",lv:0,kids:build(0,new Set(s))};
+ const c=leaves(root);
+ document.getElementById("chart").innerHTML=root.kids.length?render(root):"<p>No conflict-free branch exists.</p>";
+ document.getElementById("info").textContent=n+" ("+fmt(s)+"): "+(root.kids.length?c+" conflict-free branches":"0 branches");
+ [...tabs.children].forEach((b,j)=>b.classList.toggle("on",j===i));
+}
+OOPS.forEach(([n],i)=>{const b=document.createElement("button");b.textContent=(i+1)+". "+n;b.onclick=()=>show(i);tabs.appendChild(b)});
+show(0);
+</script></body></html>
